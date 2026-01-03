@@ -13,8 +13,8 @@ connectDB();
 // const PORT = process.env.PORT || 8001;
 // const MONGODB_URI =
 //   process.env.MONGODB_URI ||
-//   "mongodb+srv://pateljash77_db_user:pateljash77@cluster0.4w3oms7.mongodb.net/?appName=Cluster0";
-// // "mongodb+srv://pateljash77_db_user:pateljash77@cluster0.4w3oms7.mongodb.net";
+//   "mongodb+srv://##pateljash77##_db_user:##pateljash77##@cluster0.4w3oms7.mongodb.net/?appName=Cluster0";
+// // "mongodb+srv://##pateljash77##_db_user:##pateljash77##@cluster0.4w3oms7.mongodb.net";
 
 // ---------------------------------------------------------------------------------------------
 
@@ -27,8 +27,8 @@ connectDB();
 //     await mongoose.connect(`${MONGODB_URI}/`);
 
 //     // await mongoose.connect(
-//     //   // `mongodb+srv://pateljash77_db_user:pateljash77@cluster0.4w3oms7.mongodb.net/?appName=Cluster0/youtube_be_project`
-//     //   `mongodb+srv://pateljash77_db_user:pateljash77@cluster0.4w3oms7.mongodb.net/youtube_be_project`
+//     //   // `mongodb+srv://##pateljash77##_db_user:##pateljash77##@cluster0.4w3oms7.mongodb.net/?appName=Cluster0/youtube_be_project`
+//     //   `mongodb+srv://##pateljash77##_db_user:##pateljash77##@cluster0.4w3oms7.mongodb.net/youtube_be_project`
 //     // );
 
 //     // In case DB is connected but app is unable to communicate
@@ -75,10 +75,10 @@ connectDB();
 // import mongoose from "mongoose";
 
 // const MONGO_URI =
-//   "mongodb+srv://pateljash77_db_user:pateljash77@cluster0.4w3oms7.mongodb.net/youtube_be_project?retryWrites=true&w=majority&appName=Cluster0";
+//   "mongodb+srv://##pateljash77##_db_user:##pateljash77##@cluster0.4w3oms7.mongodb.net/youtube_be_project?retryWrites=true&w=majority&appName=Cluster0";
 
 // mongodb url with multiple hosts for replica set in case where facing issue with mongodb+srv urls
-// const MONGO_URI = `mongodb://pateljash77_db_user:pateljash77@ac-5br5e6z-shard-00-00.4w3oms7.mongodb.net:27017,ac-5br5e6z-shard-00-01.4w3oms7.mongodb.net:27017,ac-5br5e6z-shard-00-02.4w3oms7.mongodb.net:27017/youtube_be_project?tls=true&replicaSet=atlas-96peex-shard-0&authSource=admin`;
+// const MONGO_URI = `mongodb://##pateljash77##_db_user:##pateljash77##@ac-5br5e6z-shard-00-00.4w3oms7.mongodb.net:27017,ac-5br5e6z-shard-00-01.4w3oms7.mongodb.net:27017,ac-5br5e6z-shard-00-02.4w3oms7.mongodb.net:27017/youtube_be_project?tls=true&replicaSet=atlas-96peex-shard-0&authSource=admin`;
 
 // mongoose
 //   .connect(MONGO_URI)
