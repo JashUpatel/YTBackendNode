@@ -6,7 +6,7 @@ const connectDB = async () => {
     const connectionInstance = await mongoose.connect(
       `${process.env.MONGODB_URI}/${DB_NAME}`
       // unknown connectoon string will study later
-      // "mongodb+srv://pateljash77_db_user:jzoCmwFIuOBEyQk2@cluster0.qtcpb1c.mongodb.net/?appName=Cluster0"
+      // "mongodb+srv://${process.env.DB_USER}:jzoCmwFIuOBEyQk2@cluster0.qtcpb1c.mongodb.net/?appName=Cluster0"
     );
     console.log("MongoDB connected successfully");
     console.log(
