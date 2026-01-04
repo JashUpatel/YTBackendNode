@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "set NODE_OPTIONS=--openssl-legacy-provider & nodemon -r dotenv/config --experimental-json-modules src/index.js"
+    "start": "nodemon -r dotenv/config --experimental-json-modules src/index.js"
   },
   "keywords": [
     "javascript",
@@ -19,6 +19,8 @@
     "prettier": "^3.7.4"
   },
   "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "mongodb": "6.21.0",

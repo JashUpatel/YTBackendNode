@@ -2,12 +2,43 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import express from "express";
 import { DB_NAME } from "./constants.js";
+import app from "./app.js";
 dotenv.config({ path: "./.env" });
-import connectDB from "./db/index.js";
 
 import { MongoClient } from "mongodb";
+import connectDB from "./db/index.js";
 
-connectDB();
+connectDB()
+  .then(() => {
+    /* -> Purpose: Listens for any error events emitted by the app object
+      after the database connection is successfully established
+      Logs the error to the console
+      Re-throws the error to propagate it up the call stack
+      -> Scenarios where it executes:
+      - Database communication failures - After MongoDB connection succeeds, 
+      if the app subsequently loses connection or fails to communicate with the database
+      - Unhandled middleware errors - Errors that occur in Express middleware 
+      or route handlers that aren't caught elsewhere
+      - Critical application errors - Any error event explicitly emitted
+       on the app object by other parts of your code
+     -> Why it's placed after mongoose.connect(): The comment in your code explains this well 
+     - it's a safety net specifically for errors that occur after the database is connected. 
+     If you placed this listener before the connection, it would catch connection errors,
+     but the pattern here is to handle them separately using the try-catch block
+     that wraps the entire IIFE.
+     */
+    app.on("error", (error) => {
+      console.error("Error connecting App to DB", error);
+      throw error;
+    });
+
+    app.listen(process.env.PORT || 8001, () => {
+      console.log(`Server is running on port ${process.env.PORT || 8001}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Failed to connect to the database", err);
+  });
 
 // const app = express();
 // const PORT = process.env.PORT || 8001;
@@ -43,7 +74,7 @@ connectDB();
 //       console.log(`Server is running on port : ${PORT}`);
 //     });
 //   } catch (error) {
-//     console.error("Error connecting to the database", error);
+//     console.error("Error connecting to the database:", error);
 //   }
 // })();
 
