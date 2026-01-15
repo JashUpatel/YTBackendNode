@@ -18,3 +18,7 @@
 <!-- install bcrypt and jwt for password hashing and token generation -->
 <!-- create mongoose pre hook/middleware for executing middleware pre saveing of document and hash the password before saving if value of passowrd is modified  -->
 <!-- create mongoose methods to check the password, generate access and refresh token -->
+<!-- adding upload functionality by using cloudinary to store asset on cloud and multer to handle file -->
+<!-- install cloudinary and multer -->
+<!-- create account on cloudinary and get cloud name, api key, api secret store in .env and configure cloudinary in utils -->
+<!-- create a multer middleware to handle files -->
