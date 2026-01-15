@@ -12,4 +12,9 @@
 <!-- import connectDB function in entry index file and call it-->
 <!-- install cookie-parser for managing cookies from server, cors for cross-origin req -->
 <!-- configure cors middleware, req body parser middleware i.e express.json(), middleware for parsing url encoding, and for serving static public assets, and cookie parser middleware -->
-<!-- create wrapper for handling async function, api error, api response -->
+<!-- create wrapper for handling async function to remove boiler plate code for handling async function by wrapping in try/catch block, api error to customise error response to client, api response to standardize the api response while sending-->
+<!-- create user and video models and create schema structure-->
+<!-- install mongoose-aggregate-paginate-v2 package and add it as a plugin to video schema for aggregation queries in mongoose -->
+<!-- install bcrypt and jwt for password hashing and token generation -->
+<!-- create mongoose pre hook/middleware for executing middleware pre saveing of document and hash the password before saving if value of passowrd is modified  -->
+<!-- create mongoose methods to check the password, generate access and refresh token -->
