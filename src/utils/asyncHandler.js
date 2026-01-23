@@ -1,5 +1,9 @@
 const asyncHandler = (requestHandler) => {
-  (req, res, next) => {
+  // return a function that takes req, res, next and handles errors
+  // higher order function that wraps the original request handler
+  // without return function would not work as middleware and will throw error
+  // without return it will execute requestHandler here itself and not when route is called
+  return (req, res, next) => {
     Promise.resolve(requestHandler(req, res, next)).catch((err) => next(err));
   };
 };

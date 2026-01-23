@@ -76,4 +76,12 @@ app.use(express.static("public"));
 // there are options we can specify but not very much needed
 app.use(cookieParser());
 
+// routes imports
+import userRoutes from "./routes/user.routes.js";
+
+// routes declaration
+// when we separate routes in different files we need to use via middleware
+// using app.use() to use those routes
+app.use("/api/v1/users", userRoutes);
+
 export default app;
