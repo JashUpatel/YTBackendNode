@@ -13,6 +13,8 @@ export const uploadToCloudinary = async (localFilePath) => {
     if (!localFilePath) return null;
     const uploadResult = await cloudinary.uploader.upload(localFilePath);
     console.log("Cloudinary upload result url:", uploadResult.url);
+    // deleting file in case of success syncronously before sending response to ensure the file is deleted
+    fs.unlinkSync(localFilePath);
     return uploadResult;
   } catch (error) {
     console.log("Error uploading to Cloudinary:", error);
@@ -20,5 +22,3 @@ export const uploadToCloudinary = async (localFilePath) => {
     return null;
   }
 };
-
-export { uploadToCloudinary };

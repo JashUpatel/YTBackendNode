@@ -22,3 +22,17 @@
 <!-- install cloudinary and multer -->
 <!-- create account on cloudinary and get cloud name, api key, api secret store in .env and configure cloudinary in utils -->
 <!-- create a multer middleware to handle files -->
+<!-- create user controller file and export registerUser method and fix asyncHandler by return the function and making it a HOF -->
+<!-- create user route file and implement register route and export it-->
+<!-- import user route in app.js file and declare user route using middleware i.e app.use --> 
+<!-- In user controller file handle register functionality
+  // Extract user data from req.body
+  // validate all the data
+  // check if user already exists: username, email
+  // add middleware in user/register route to handle files
+  // check for images, check for avatar
+  // upload them to cloudinary or any other service
+  // create user object - create entry in db
+  // remove password and refresh tokenfrom user object before sending response
+  // check for user creation success
+  // return response to client -->
