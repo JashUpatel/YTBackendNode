@@ -281,4 +281,136 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     throw new ApiError(401, error?.message || "Invalid refresh token");
   }
 });
-export { regsiterUser, loginUser, logoutUser, refreshAccessToken };
+
+const changePassword = asyncHandler(async (req, res) => {
+  // 1. get old password and new password from req.body
+  // 2. check if old password is correct or not using user instance method
+  // 3. if old password is correct then set new password to user instance and save it to db which will trigger the pre save hook to hash the new password before saving to db
+  // 4. send response to client
+  const { oldPassword, newPassword } = req.body;
+
+  if (!oldPassword || !newPassword) {
+    throw new ApiError(400, "Old password and new password are required");
+  }
+  const user = await User.findById(req.user._id);
+
+  const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+
+  if (!isPasswordCorrect) {
+    throw new ApiError(401, "Old password is incorrect");
+  }
+
+  user.password = newPassword; // set new password to user instance, this will trigger the pre save hook to hash the new password before saving to db
+  await user.save({ validateBeforeSave: false }); // save the user instance to db without validating the checks for other fields
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Password changed successfully"));
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+  // as we are using auth middleware to protect this route, so we will have access to req.user which is set by auth middleware after verifying access token, so we can send that user data in response
+  return res
+    .status(200)
+    .json(new ApiResponse(200, req.user, "Current user fetched successfully"));
+});
+
+// to update any file keep separate end point is better approach in production level codebase
+// as updating account details and updating profile picture or cover image are different usecases and can be handled separately, as updating profile picture or cover image will involve handling file upload and integration with cloudinary or any other service, so it is better to keep them separate for better code organization and maintainability
+// if we update whole user in same endpoint then text user data will also go along the file everytime which may not be required and can lead to network congestion
+//  this is for updating text based details
+const updateAccountDetails = asyncHandler(async (req, res) => {
+  // to update account details like fullname, email, username, avatar, cover image etc
+  // we can update them in user document in db and send the updated user data in response
+  // we can also handle the image upload if there is any new image for avatar or cover image and update the url in db as well
+
+  const { fullName, email } = req.body;
+  if (!fullName || !email) {
+    throw new ApiError(400, "Full name and email are required");
+  }
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        fullName,
+        email,
+      },
+    },
+    { new: true } // to return the updated user document instead of the old one
+  ).select("-password");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Account details updated successfully"));
+});
+
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  // to update user avatar
+  // we can handle the file upload using multer middleware and then upload the file to cloudinary and get the url and update the user document in db with new avatar url and send the updated user data in response
+  const avatarLocalPath = req.file?.path;
+
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar image is required");
+  }
+
+  const avatar = await uploadToCloudinary(avatarLocalPath);
+
+  if (!avatar?.url) {
+    throw new ApiError(400, "Error while uploading avatar image");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        avatar: avatar.url,
+      },
+    },
+    { new: true }
+  ).select("-password");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Avatar updated successfully"));
+});
+
+const updateUserCoverImage = asyncHandler(async (req, res) => {
+  // to update user cover image
+  // we can handle the file upload using multer middleware and then upload the file to cloudinary and get the url and update the user document in db with new cover image url and send the updated user data in response
+  const coverImageLocalPath = req.file?.path;
+
+  if (!coverImageLocalPath) {
+    throw new ApiError(400, "Cover image is required");
+  }
+
+  const coverImage = await uploadToCloudinary(coverImageLocalPath);
+
+  if (!coverImage?.url) {
+    throw new ApiError(400, "Error while uploading cover image");
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        coverImage: coverImage.url,
+      },
+    },
+    { new: true }
+  ).select("-password");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "Cover image updated successfully"));
+});
+
+export {
+  regsiterUser,
+  loginUser,
+  logoutUser,
+  refreshAccessToken,
+  changePassword,
+  getCurrentUser,
+  updateAccountDetails,
+  updateUserAvatar,
+  updateUserCoverImage,
+};
