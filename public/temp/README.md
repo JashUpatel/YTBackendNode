@@ -36,3 +36,7 @@
   // remove password and refresh tokenfrom user object before sending response
   // check for user creation success
   // return response to client -->
+  <!-- In user controller file add controller for loginUser, logoutUser, generateRefreshToken -->
+  <!-- Create auth middleware to verify the access token and attach authenticated user object to the request -->
+  <!-- In user route file add the route for login, logout (securedRoute) with the help of auth middleware, and generateRefreshToken -->
+  <!-- Create Subscription model -->

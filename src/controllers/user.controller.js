@@ -1,8 +1,29 @@
+import jwt from "jsonwebtoken";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { uploadToCloudinary } from "../utils/couldinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+
+// helper function to generate access token and refresh token for a user
+// not using asyncHandler here as this is not a request handler function, it is a helper function which we will call inside request handler functions
+// as this function is not directly used as a request handler in routes, it does not have access to req, res, next objects and it is not a middleware function, so we do not need to use asyncHandler here
+// it will be user internally only so can use normal async function with try catch block to handle errors and throw ApiError in case of any error which we can catch in the request handler functions where we will call this helper function and handle the error there using asyncHandler
+const generateAccessTokenAndRefreshToken = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+    user.refreshToken = refreshToken;
+    await user.save();
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new ApiError(
+      500,
+      "Something went wrong while generating refresh and access tokens"
+    );
+  }
+};
 
 const regsiterUser = asyncHandler(async (req, res) => {
   // Extract user data from req.body
@@ -89,4 +110,175 @@ const regsiterUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, createdUser, "User registered successfully"));
 });
 
-export { regsiterUser };
+const loginUser = asyncHandler(async (req, res) => {
+  // req.body -> data
+  // username or email, password
+  // find the user
+  // password check
+  // access token and refresh token
+  // send secure cookies
+
+  const { email, username, password } = req.body;
+
+  // we are checking for email or username, so if both are not present then we will throw error
+  // atleast email or username should be present in req.body to find the user
+  // if(!(email || username)) {
+  // but we want both for now
+  if (!email && !username) {
+    throw new ApiError(400, "Email or username is required");
+  }
+
+  // use $or operator to check for user with given email or username
+  // mongoose provides $or operator to perform logical OR operation in queries
+  // we can pass an array of conditions to $or operator, and it will return documents that match any of the conditions
+  // so it will check for user with given email or username is present and return the user document if found
+  const user = await User.findOne({
+    $or: [{ email }, { username }],
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User does not exist");
+  }
+
+  // user instance method to check password
+  // User is model provided by mongoose it will have methods provided by mongoose like findOne, findById etc and also the instance methods we create on userSchema.methods
+  // user is the instance of User model which we get after finding the user document in db using findOne method, so it will have access to instance methods we create on userSchema.methods like isPasswordCorrect
+  // so the custom methods we create on userSchema.methods will be available on the user instance we get after querying the db,
+  // so we can call user.isPasswordCorrect to check if the password is correct or not
+  // Note: custom methods are not available on the User model itself, they are only available on the instances of the model which we get after querying the db
+  const isPasswordValid = await user.isPasswordCorrect(password);
+
+  if (!isPasswordValid) {
+    throw new ApiError(401, "Invalid user credentials");
+  }
+
+  // generate access token and refresh token
+  const { accessToken, refreshToken } =
+    await generateAccessTokenAndRefreshToken(user._id);
+
+  // send information to the client/user
+  // sending password and refresh token in response is not a good idea for security reasons, so we will not send them in response
+  // we can send user data in response using user object as well by setting password and token to null but it is better to query the db again and select only the fields we want to send in response and exclude password and refresh token using select method of mongoose which is more secure approach
+  // Note: also in user instance above will not have refresh token it would be empty as it was generated later anyways its not required to send to user,
+  // as per the usecase if quering the db again feels expensive then update the existing user instance else do it
+  const loggedInUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
+
+  const options = {
+    httpOnly: true, // to prevent client side scripts from accessing the cookie for security purpose
+    secure: true, // to send cookie only over https in production environment
+    // secure: process.env.NODE_ENV === "production", // to send cookie only over https in production environment
+    // sameSite: "strict", // to prevent CSRF attacks by not sending cookies in cross site requests
+    // maxAge: 7 * 24 * 60 * 60 * 1000, // cookie expiry time in milliseconds (7 days)
+  };
+
+  // send access token and refresh token in httpOnly cookies for security purpose
+  // and also send user data in response body depends upon the usecase what object you want to send in response
+  // Note: we can send access token and refresh token in response body as well but it is not a good idea for security reasons, as it can be accessed by client side scripts and can lead to security vulnerabilities like XSS attacks, so it is better to send them in httpOnly cookies which cannot be accessed by client side scripts
+  // but we are sending them in response body as well to handle the usecase  where client/user/FE is trying to set accesstoken/refreshtoken in local storage instead of cookies
+  // or possibly response is consumed in mobile app where cookies are not supported, so in that case we can send access token and refresh token in response body as well
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(
+        200,
+        { user: loggedInUser, accessToken, refreshToken },
+        "User logged in successfully"
+      )
+    );
+});
+
+const logoutUser = asyncHandler(async (req, res) => {
+  // 1.clear accesstoekn and refresh token cookies from client browser
+  // 2.reset the refresh token in db
+  // to logout user we will clear the access token and refresh token cookies by setting them to empty string
+  // and also set their expiry time to past date so that they get deleted from client browser
+  // and also remove refresh token from db for that user so that it cannot be used to generate new access token
+
+  const userId = req.user._id; // we will get user id from req.user which is set by auth middleware after verifying access token
+  // await User.findByIdAndUpdate(userId, { refreshToken: "" }); // remove refresh token from db for that user
+  // but in our case we want to remove the field from db for that user which is more clean approach, so we can use $unset operator which is used to remove a field from a document, it will remove the field from db for that user
+  // await User.findByIdAndUpdate(userId, { $unset: { refreshToken: "" } });
+  // set is a mongodb operator which is used to set the value of a field in a document, it will add the field if it does not exist or update the value if it already exists,
+  await User.findByIdAndUpdate(
+    userId,
+    { $set: { refreshToken: undefined } },
+    { new: true }
+  ); // to remove the refresh token field from db for that user, it is better than setting it to empty string as it will remove the field from db which is more clean approach, but it is optional to do it, we can also set it to empty string or null as well depending upon the usecase and how you want to handle it in your codebase
+
+  // we can also use findById and then save method to remove refresh token
+  // then save it with validateBefore which is used to bypass the validation checks like required true etc to false to save in db for that user
+  // but it is better to use findByIdAndUpdate method which is more efficient as it performs the update operation in a single query without fetching the user document first and then saving it, so it reduces the number of queries to the database and improves performance
+
+  const options = {
+    httpOnly: true, // to prevent client side scripts from accessing the cookie for security purpose
+    secure: true, // to send cookie only over https in production environment
+  };
+
+  // clear access token and refresh token cookies
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, "User logged out successfully"));
+});
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  // 1. get refresh token from cookies
+  // 2. verify refresh token
+  // 3. check if refresh token is present in db for that user
+  // 4. generate new access token and refresh token
+  // 5. send new access token and refresh token in httpOnly cookies
+
+  const incomingRefreshToken =
+    req.cookies?.refreshToken ||
+    req.body.refreshToken ||
+    req.header("Authorization")?.replace("Bearer ", ""); // get refresh token from cookies or authorization header
+
+  if (!incomingRefreshToken) {
+    throw new ApiError(401, "Refresh token is required");
+  }
+
+  try {
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
+    const user = await User.findById(decodedToken?._id);
+
+    if (!user) {
+      throw new ApiError(401, "Invalid refresh token");
+    }
+
+    if (user.refreshToken !== incomingRefreshToken) {
+      throw new ApiError(401, "Refresh token is expired or used");
+    }
+
+    const options = {
+      httpOnly: true, // to prevent client side scripts from accessing the cookie for security purpose
+      secure: true, // to send cookie only over https in production environment
+    };
+
+    const { accessToken, newRefreshToken } =
+      await generateAccessTokenAndRefreshToken(user._id);
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json(
+        new ApiResponse(
+          200,
+          { accessToken, refreshToken: newRefreshToken },
+          "Access token refreshed successfully"
+        )
+      );
+  } catch (error) {
+    throw new ApiError(401, error?.message || "Invalid refresh token");
+  }
+});
+export { regsiterUser, loginUser, logoutUser, refreshAccessToken };
