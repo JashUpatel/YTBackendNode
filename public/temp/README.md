@@ -41,3 +41,5 @@
   <!-- In user route file add the route for login, logout (securedRoute) with the help of auth middleware, and generateRefreshToken -->
   <!-- Create Subscription model -->
   <!-- In user controller add password change, account details update, avatar/coverImage update controller -->
+  <!-- In user controller add get user channel profile controller to get subsriber and subsscribed to details using aggregation and get watch history controller to fetch watch history details using nested aggregation pipelines -->
+  <!-- add user routes for change password, current user details, update profile, update cover image, avatar, user channel profile and watch history -->
